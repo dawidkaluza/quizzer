@@ -8,20 +8,24 @@
         <version>2.4.4</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
+
     <groupId>org.quizzer</groupId>
     <artifactId>category-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>category-service</name>
     <description>Demo project for Spring Boot</description>
+
     <properties>
         <java.version>11</java.version>
         <spring-cloud.version>2020.0.2</spring-cloud.version>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -37,15 +41,29 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+
+            <exclusions>
+                <exclusion>
+                    <groupId>org.junit.vintage</groupId>
+                    <artifactId>junit-vintage-engine</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
         </dependency>
     </dependencies>
 
@@ -75,7 +93,55 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.35.0</version>
+
+                <configuration>
+                    <images>
+                        <image>
+                            <name>database:latest</name>
+                            <alias>database</alias>
+
+                            <build>
+                                <dockerFileDir>${project.basedir}/database</dockerFileDir>
+                            </build>
+
+                            <run>
+                                <namingStrategy>alias</namingStrategy>
+
+                                <wait>
+                                    <log>database system is ready to accept connections</log>
+                                    <time>20000</time>
+                                </wait>
+
+                                <ports>
+                                    <port>5555:5432</port>
+                                </ports>
+                            </run>
+                        </image>
+
+                        <image>
+                            <name>category-service:latest</name>
+                            <alias>category-service</alias>
+
+                            <run>
+                                <namingStrategy>alias</namingStrategy>
+
+                                <links>
+                                    <link>database</link>
+                                </links>
+
+                                <ports>
+                                    <port>8080:8080</port>
+                                </ports>
+                            </run>
+                        </image>
+                    </images>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
-
 </project>

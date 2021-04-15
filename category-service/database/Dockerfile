@@ -1,0 +1,7 @@
+FROM postgres:12-alpine
+
+ENV LANG en_US.utf8
+ENV POSTGRES_USER=developer
+ENV POSTGRES_PASSWORD=developer
+
+EXPOSE 5432
