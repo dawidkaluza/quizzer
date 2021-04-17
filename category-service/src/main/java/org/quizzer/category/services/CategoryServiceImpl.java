@@ -4,6 +4,7 @@ import org.quizzer.category.dto.base.CategoryDto;
 import org.quizzer.category.dto.creation.CategoryCreationDto;
 import org.quizzer.category.dto.page.PageDto;
 import org.quizzer.category.dto.update.CategoryUpdateDto;
+import org.quizzer.category.exceptions.CategoryNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional(readOnly = true)
-    public CategoryDto get(Long id) {
+    public CategoryDto get(Long id) throws CategoryNotFoundException {
         return null;
     }
 

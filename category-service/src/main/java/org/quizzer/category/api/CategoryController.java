@@ -5,8 +5,8 @@ import org.quizzer.category.dto.base.CategoryDto;
 import org.quizzer.category.dto.creation.CategoryCreationDto;
 import org.quizzer.category.dto.page.PageDto;
 import org.quizzer.category.dto.update.CategoryUpdateDto;
+import org.quizzer.category.exceptions.CategoryNotFoundException;
 import org.quizzer.category.services.CategoryService;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
@@ -25,9 +25,8 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    public CategoryDto getCategory(@PathVariable("id") Long id) {
-        //TODO write tests
-        return null;
+    public CategoryDto getCategory(@PathVariable("id") Long id) throws CategoryNotFoundException {
+        return categoryService.get(id);
     }
 
     @PostMapping
