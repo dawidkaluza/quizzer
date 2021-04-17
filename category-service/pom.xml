@@ -13,7 +13,7 @@
     <artifactId>category-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>category-service</name>
-    <description>Demo project for Spring Boot</description>
+    <description>Category service</description>
 
     <properties>
         <java.version>11</java.version>
@@ -32,8 +32,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
         <dependency>
@@ -91,55 +91,6 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>io.fabric8</groupId>
-                <artifactId>docker-maven-plugin</artifactId>
-                <version>0.35.0</version>
-
-                <configuration>
-                    <images>
-                        <image>
-                            <name>database:latest</name>
-                            <alias>database</alias>
-
-                            <build>
-                                <dockerFileDir>${project.basedir}/database</dockerFileDir>
-                            </build>
-
-                            <run>
-                                <namingStrategy>alias</namingStrategy>
-
-                                <wait>
-                                    <log>database system is ready to accept connections</log>
-                                    <time>20000</time>
-                                </wait>
-
-                                <ports>
-                                    <port>5555:5432</port>
-                                </ports>
-                            </run>
-                        </image>
-
-                        <image>
-                            <name>category-service:latest</name>
-                            <alias>category-service</alias>
-
-                            <run>
-                                <namingStrategy>alias</namingStrategy>
-
-                                <links>
-                                    <link>database</link>
-                                </links>
-
-                                <ports>
-                                    <port>8080:8080</port>
-                                </ports>
-                            </run>
-                        </image>
-                    </images>
                 </configuration>
             </plugin>
         </plugins>

@@ -2,6 +2,7 @@ package org.quizzer.category.services;
 
 import org.quizzer.category.dto.base.CategoryDto;
 import org.quizzer.category.dto.creation.CategoryCreationDto;
+import org.quizzer.category.dto.page.PageDto;
 import org.quizzer.category.dto.update.CategoryUpdateDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,7 +13,14 @@ public interface CategoryService {
      * @param pageable specifies pagination details
      * @return page of categories
      */
-    Page<CategoryDto> getAll(Pageable pageable);
+    PageDto<CategoryDto> getAll(Pageable pageable);
+
+    /**
+     * Returns category by given id
+     * @param id category id
+     * @return category
+     */
+    CategoryDto get(Long id);
 
     /**
      * Creates new category
