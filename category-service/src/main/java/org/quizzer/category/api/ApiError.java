@@ -7,12 +7,14 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Singular;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @Builder
 @Data
@@ -24,6 +26,9 @@ public class ApiError {
 
     @Builder.Default
     private final ZonedDateTime timestamp = ZonedDateTime.now();
+
+    @Singular
+    private final List<ApiFieldError> fieldErrors;
 
     @JsonIgnore
     @Builder.Default
