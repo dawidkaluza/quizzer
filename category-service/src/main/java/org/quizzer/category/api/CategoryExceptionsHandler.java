@@ -1,6 +1,7 @@
 package org.quizzer.category.api;
 
 import org.quizzer.category.exceptions.CategoryNotFoundException;
+import org.quizzer.category.exceptions.NameAlreadyExistsException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,15 @@ public class CategoryExceptionsHandler {
         return ApiError.builder()
             .status(HttpStatus.NOT_FOUND)
             .message("Category doesn't exist")
+            .build()
+            .toResponseEntity();
+    }
+
+    @ExceptionHandler(NameAlreadyExistsException.class)
+    public ResponseEntity<Object> nameAlreadyExistsExceptionHandler() {
+        return ApiError.builder()
+            .status(HttpStatus.CONFLICT)
+            .message("Name already exists")
             .build()
             .toResponseEntity();
     }

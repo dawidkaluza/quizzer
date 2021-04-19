@@ -36,10 +36,9 @@ public class CategoryController {
         return categoryService.create(request);
     }
 
-    @PutMapping
-    public CategoryDto updateCategory(@RequestBody @Valid CategoryUpdateDto.Request request) {
-        //TODO write tests
-        return null;
+    @PutMapping("/{id}")
+    public CategoryDto updateCategory(@PathVariable("id") Long id, @RequestBody @Valid CategoryUpdateDto.Request request) throws CategoryNotFoundException {
+        return categoryService.update(id, request);
     }
 
     @DeleteMapping("/{id}")

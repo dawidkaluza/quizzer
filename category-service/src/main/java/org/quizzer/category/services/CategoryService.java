@@ -5,7 +5,7 @@ import org.quizzer.category.dto.creation.CategoryCreationDto;
 import org.quizzer.category.dto.page.PageDto;
 import org.quizzer.category.dto.update.CategoryUpdateDto;
 import org.quizzer.category.exceptions.CategoryNotFoundException;
-import org.springframework.data.domain.Page;
+import org.quizzer.category.exceptions.NameAlreadyExistsException;
 import org.springframework.data.domain.Pageable;
 
 public interface CategoryService {
@@ -26,21 +26,26 @@ public interface CategoryService {
 
     /**
      * Creates new category
-     * @param request category request
+     * @param request creation request
      * @return created category object
+     * @throws NameAlreadyExistsException if request's name already exists
      */
-    CategoryDto create(CategoryCreationDto.Request request);
+    CategoryDto create(CategoryCreationDto.Request request) throws NameAlreadyExistsException;
 
     /**
      * Updates existing category
-     * @param request category request
+     * @param id category id
+     * @param request update request
      * @return created category object
+     * @throws NameAlreadyExistsException if request's name already exists
+     * @throws CategoryNotFoundException if category with given id doesn't exist
      */
-    CategoryDto update(CategoryUpdateDto.Request request);
+    CategoryDto update(Long id, CategoryUpdateDto.Request request) throws NameAlreadyExistsException, CategoryNotFoundException;
 
     /**
      * Deletes category
      * @param id category id
+     * @throws CategoryNotFoundException if category with given id doesn't exist
      */
-    void delete(Long id);
+    void delete(Long id) throws CategoryNotFoundException;
 }

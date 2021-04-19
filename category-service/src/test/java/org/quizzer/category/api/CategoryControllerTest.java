@@ -1,11 +1,11 @@
 package org.quizzer.category.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.quizzer.category.dto.base.CategoryDto;
 import org.quizzer.category.dto.page.PageDto;
 import org.quizzer.category.exceptions.CategoryNotFoundException;
+import org.quizzer.category.exceptions.NameAlreadyExistsException;
 import org.quizzer.category.services.CategoryService;
 import org.quizzer.category.utils.mockmvc.PageResultMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.web.util.NestedServletException;
 
 import java.util.List;
 import java.util.Map;
@@ -26,8 +25,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;
 import static org.quizzer.category.utils.mockmvc.ErrorResultMatchers.expectError;
 import static org.quizzer.category.utils.mockmvc.ErrorResultMatchers.expectFieldError;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -138,17 +136,21 @@ class CategoryControllerTest {
     }
 
     @Test
-    public void getCategory_nonExistingId_throwException() {
+    public void getCategory_nonExistingId_returnError() throws Exception {
         //Given
         when(categoryService.get(any())).thenThrow(new CategoryNotFoundException("Category doesn't exist"));
 
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            get("/category/1")
+        );
+
         //When, then
-        NestedServletException exception = Assertions.assertThrows(NestedServletException.class, () -> mockMvc.perform(get("/category/1")));
-        Assertions.assertTrue(exception.getCause() instanceof CategoryNotFoundException);
+        expectError(resultActions, HttpStatus.NOT_FOUND);
     }
 
     @Test
-    public void createCategory_tooShortName_throwException() throws Exception {
+    public void createCategory_tooShortName_returnError() throws Exception {
         //Given
         Map<String, Object> body = Map.of(
             "name", "",
@@ -168,7 +170,7 @@ class CategoryControllerTest {
     }
 
     @Test
-    public void createCategory_tooLongName_throwException() throws Exception {
+    public void createCategory_tooLongName_returnError() throws Exception {
         //Given
         Map<String, Object> body = Map.of(
             "name", "abcd".repeat(48) + "a",
@@ -188,7 +190,7 @@ class CategoryControllerTest {
     }
 
     @Test
-    public void createCategory_tooShortDescription_throwException() throws Exception {
+    public void createCategory_tooShortDescription_returnError() throws Exception {
         //Given
         Map<String, Object> body = Map.of(
             "name", "Some category name",
@@ -208,7 +210,7 @@ class CategoryControllerTest {
     }
 
     @Test
-    public void createCategory_tooLongDescription_throwException() throws Exception {
+    public void createCategory_tooLongDescription_returnError() throws Exception {
         //Given
         Map<String, Object> body = Map.of(
             "name", "Some category name",
@@ -225,6 +227,26 @@ class CategoryControllerTest {
         //Then
         expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
         expectFieldError(resultActions, "description");
+    }
+
+    @Test
+    public void createCategory_existingName_returnError() throws Exception {
+        //Given
+        when(categoryService.create(any())).thenThrow(new NameAlreadyExistsException("Name already exists"));
+        Map<String, Object> body = Map.of(
+            "name", "Existing name",
+            "description", "Valid description"
+        );
+
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            post("/category")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        );
+
+        //Then
+        expectError(resultActions, HttpStatus.CONFLICT);
     }
 
     @Test
@@ -252,4 +274,152 @@ class CategoryControllerTest {
             .andExpect(jsonPath("$.name").value("Some category name"))
             .andExpect(jsonPath("$.description").value("With valid desc of course!"));
     }
+
+    @Test
+    public void updateCategory_nonExistingCategory_returnError() throws Exception {
+        //Given
+        when(categoryService.update(any(), any())).thenThrow(new CategoryNotFoundException("Category doesn't exist"));
+        Map<String, Object> body = Map.of(
+            "name", "New valid name",
+            "description", "New valid description"
+        );
+
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            put("/category/{id}", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        );
+
+        //Then
+        expectError(resultActions, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    public void updateCategory_tooShortName_returnError() throws Exception {
+        //Given
+        Map<String, Object> body = Map.of(
+            "name", "n",
+            "description", "New valid description"
+        );
+
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            put("/category/{id}", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        );
+
+        //Then
+        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(resultActions, "name");
+    }
+
+    @Test
+    public void updateCategory_tooLongName_returnError() throws Exception {
+        //Given
+        Map<String, Object> body = Map.of(
+            "name", "n".repeat(193),
+            "description", "New valid description"
+        );
+
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            put("/category/{id}", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        );
+
+        //Then
+        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(resultActions, "name");
+    }
+
+    @Test
+    public void updateCategory_tooShortDescription_returnError() throws Exception {
+        //Given
+        Map<String, Object> body = Map.of(
+            "name", "New valid name",
+            "description", "ok"
+        );
+
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            put("/category/{id}", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        );
+
+        //Then
+        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(resultActions, "description");
+    }
+
+    @Test
+    public void updateCategory_tooLongDescription_returnError() throws Exception {
+        //Given
+        Map<String, Object> body = Map.of(
+            "name", "New valid name",
+            "description", "i".repeat(513)
+        );
+
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            put("/category/{id}", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        );
+
+        //Then
+        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(resultActions, "description");
+    }
+
+    @Test
+    public void updateCategory_existingName_returnError() throws Exception {
+        //Given
+        when(categoryService.update(any(), any())).thenThrow(new NameAlreadyExistsException("Name already exists"));
+        Map<String, Object> body = Map.of(
+            "name", "Existing name",
+            "description", "Valid description"
+        );
+
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            put("/category/{id}", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        );
+
+        //Then
+        expectError(resultActions, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    public void updateCategory_validCreationRequest_returnError() throws Exception {
+        //Given
+        when(categoryService.update(any(), any())).thenReturn(
+            new CategoryDto(1L, "New valid name", "New valid description")
+        );
+        Map<String, Object> body = Map.of(
+            "name", "New valid name",
+            "description", "New valid description"
+        );
+
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            put("/category/{id}", 1L)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        );
+
+        //Then
+        resultActions
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(1L))
+            .andExpect(jsonPath("$.name").value("New valid name"))
+            .andExpect(jsonPath("$.description").value("New valid description"));
+    }
+
+
 }
