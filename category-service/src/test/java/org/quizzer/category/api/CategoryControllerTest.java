@@ -144,15 +144,35 @@ class CategoryControllerTest {
             get("/category/1")
         );
 
-        //When, then
+        //Then
         expectError(resultActions, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    public void createCategory_emptyName_returnError() throws Exception {
+        //Given
+        Map<String, Object> body = Map.of(
+            "name", "         ",
+            "description", "Long enough desc"
+        );
+
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            post("/category")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        );
+
+        //Then
+        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(resultActions, "name");
     }
 
     @Test
     public void createCategory_tooShortName_returnError() throws Exception {
         //Given
         Map<String, Object> body = Map.of(
-            "name", "",
+            "name", "s",
             "description", "Long enough desc"
         );
 
@@ -186,6 +206,26 @@ class CategoryControllerTest {
         //Then
         expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
         expectFieldError(resultActions, "name");
+    }
+
+    @Test
+    public void createCategory_emptyDescription_returnError() throws Exception {
+        //Given
+        Map<String, Object> body = Map.of(
+            "name", "Some category name",
+            "description", "     "
+        );
+
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            post("/category")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        );
+
+        //Then
+        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(resultActions, "description");
     }
 
     @Test
