@@ -21,8 +21,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import java.util.List;
 import java.util.Map;
 
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.quizzer.category.utils.mockmvc.ErrorResultMatchers.expectError;
 import static org.quizzer.category.utils.mockmvc.ErrorResultMatchers.expectFieldError;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -421,5 +420,24 @@ class CategoryControllerTest {
             .andExpect(jsonPath("$.description").value("New valid description"));
     }
 
+    @Test
+    public void deleteCategory_nonExistingId_returnError() throws Exception {
+        //Given
+        doThrow(new CategoryNotFoundException("Category doesn't exist")).when(categoryService).delete(any());
 
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            delete("/category/{id}", 1L)
+        );
+
+        //Then
+        expectError(resultActions, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    public void deleteCategory_existingId_returnNoContentStatus() throws Exception {
+        //Given, when, then
+        mockMvc.perform(delete("/category/{id}", 1L))
+            .andExpect(status().isNoContent());
+    }
 }
