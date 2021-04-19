@@ -9,6 +9,7 @@ import org.quizzer.category.exceptions.CategoryNotFoundException;
 import org.quizzer.category.services.CategoryService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -30,13 +31,13 @@ public class CategoryController {
     }
 
     @PostMapping
-    public CategoryDto createCategory(@Valid CategoryCreationDto.Request request) {
-        //TODO write tests
-        return null;
+    @ResponseStatus(HttpStatus.CREATED)
+    public CategoryDto createCategory(@RequestBody @Valid CategoryCreationDto.Request request) {
+        return categoryService.create(request);
     }
 
     @PutMapping
-    public CategoryDto updateCategory(@Valid CategoryUpdateDto.Request request) {
+    public CategoryDto updateCategory(@RequestBody @Valid CategoryUpdateDto.Request request) {
         //TODO write tests
         return null;
     }

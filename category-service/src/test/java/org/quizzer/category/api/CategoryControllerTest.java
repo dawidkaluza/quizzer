@@ -1,39 +1,46 @@
 package org.quizzer.category.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.quizzer.category.dto.base.CategoryDto;
 import org.quizzer.category.dto.page.PageDto;
 import org.quizzer.category.exceptions.CategoryNotFoundException;
 import org.quizzer.category.services.CategoryService;
 import org.quizzer.category.utils.mockmvc.PageResultMatchers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.util.NestedServletException;
 
 import java.util.List;
+import java.util.Map;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
+import static org.quizzer.category.utils.mockmvc.ErrorResultMatchers.expectError;
+import static org.quizzer.category.utils.mockmvc.ErrorResultMatchers.expectFieldError;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@WebMvcTest(CategoryController.class)
 class CategoryControllerTest {
+    @MockBean
     private CategoryService categoryService;
+
+    @Autowired
     private MockMvc mockMvc;
 
-    @BeforeEach
-    public void setUp() {
-        categoryService = mock(CategoryService.class);
-        mockMvc = MockMvcBuilders
-            .standaloneSetup(new CategoryController(categoryService))
-            .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
-            .build();
-    }
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
     public void getCategories_noInput_returnDefaultPagedCategories() throws Exception {
@@ -138,5 +145,111 @@ class CategoryControllerTest {
         //When, then
         NestedServletException exception = Assertions.assertThrows(NestedServletException.class, () -> mockMvc.perform(get("/category/1")));
         Assertions.assertTrue(exception.getCause() instanceof CategoryNotFoundException);
+    }
+
+    @Test
+    public void createCategory_tooShortName_throwException() throws Exception {
+        //Given
+        Map<String, Object> body = Map.of(
+            "name", "",
+            "description", "Long enough desc"
+        );
+
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            post("/category")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        );
+
+        //Then
+        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(resultActions, "name");
+    }
+
+    @Test
+    public void createCategory_tooLongName_throwException() throws Exception {
+        //Given
+        Map<String, Object> body = Map.of(
+            "name", "abcd".repeat(48) + "a",
+            "description", "Long enough desc"
+        );
+
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            post("/category")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        );
+
+        //Then
+        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(resultActions, "name");
+    }
+
+    @Test
+    public void createCategory_tooShortDescription_throwException() throws Exception {
+        //Given
+        Map<String, Object> body = Map.of(
+            "name", "Some category name",
+            "description", "sr"
+        );
+
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            post("/category")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        );
+
+        //Then
+        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(resultActions, "description");
+    }
+
+    @Test
+    public void createCategory_tooLongDescription_throwException() throws Exception {
+        //Given
+        Map<String, Object> body = Map.of(
+            "name", "Some category name",
+            "description", "e".repeat(513)
+        );
+
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            post("/category")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        );
+
+        //Then
+        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(resultActions, "description");
+    }
+
+    @Test
+    public void createCategory_validCreationRequest_returnCreatedCategory() throws Exception {
+        //Given
+        when(categoryService.create(any())).thenReturn(
+            new CategoryDto(1L, "Some category name", "With valid desc of course!")
+        );
+        Map<String, Object> body = Map.of(
+            "name", "Some category name",
+            "description", "With valid desc of course!"
+        );
+
+        //When
+        ResultActions resultActions = mockMvc.perform(
+            post("/category")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body))
+        );
+
+        //Then
+        resultActions
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.id").value(1L))
+            .andExpect(jsonPath("$.name").value("Some category name"))
+            .andExpect(jsonPath("$.description").value("With valid desc of course!"));
     }
 }
