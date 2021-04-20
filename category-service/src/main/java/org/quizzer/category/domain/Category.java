@@ -1,15 +1,15 @@
 package org.quizzer.category.domain;
 
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Setter;
+import lombok.*;
 
 import javax.persistence.*;
 
 @Entity
 @Data
 @EqualsAndHashCode(of = "id")
+@NoArgsConstructor
+@AllArgsConstructor
+//TODO remove all args constructor and use mocks and spies in tests
 public class Category {
     @Setter(AccessLevel.PROTECTED)
     @Id

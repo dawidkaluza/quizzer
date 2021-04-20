@@ -8,6 +8,6 @@ import org.springframework.stereotype.Component;
 public class PageDtoMapper<T> implements DtoMapper<Page<T>, PageDto<T>> {
     @Override
     public PageDto<T> toDto(Page<T> page) {
-        return new PageDto<T>(page.getContent(), page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages());
+        return new PageDto<>(page.getContent(), page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages());
     }
 }
