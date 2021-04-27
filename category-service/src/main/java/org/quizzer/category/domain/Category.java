@@ -8,8 +8,6 @@ import javax.persistence.*;
 @Data
 @EqualsAndHashCode(of = "id")
 @NoArgsConstructor
-@AllArgsConstructor
-//TODO remove all args constructor and use mocks and spies in tests
 public class Category {
     @Setter(AccessLevel.PROTECTED)
     @Id
