@@ -1,0 +1,15 @@
+version: "3.5"
+
+services:
+  eureka-server:
+    build: .
+    image: eureka-server
+    container_name: eureka-server
+    ports:
+      - 8761:8761
+    networks:
+      - quizzer-network
+
+networks:
+  quizzer-network:
+    name: "quizzer-network"
