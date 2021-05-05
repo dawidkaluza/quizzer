@@ -97,9 +97,8 @@ class CategoryServiceImplTest {
     @Test
     public void get_existingId_returnCategoryDto() {
         //Given
-        when(categoryRepository.findById(1L)).thenReturn(
-            Optional.of(mockCategory(1L, "First category", "First category desc"))
-        );
+        Optional<Category> optionalCategory = Optional.of(mockCategory(1L, "First category", "First category desc"));
+        when(categoryRepository.findById(1L)).thenReturn(optionalCategory);
 
         //When
         CategoryDto category = categoryService.get(1L);
@@ -154,12 +153,10 @@ class CategoryServiceImplTest {
     @Test
     public void update_existingNameInDifferentCategory_throwException() {
         //Given
-        when(categoryRepository.findById(1L)).thenReturn(
-            Optional.of(mockCategory(1L, "First category", "First category description"))
-        );
-        when(categoryRepository.findCategoryByName("Second category")).thenReturn(
-            Optional.of(mockCategory(2L, "Second category", "Second category description"))
-        );
+        Optional<Category> optionalFirstCategory = Optional.of(mockCategory(1L, "First category", "First category description"));
+        when(categoryRepository.findById(1L)).thenReturn(optionalFirstCategory);
+        Optional<Category> optionalSecondCategory = Optional.of(mockCategory(2L, "Second category", "Second category description"));
+        when(categoryRepository.findCategoryByName("Second category")).thenReturn(optionalSecondCategory);
 
         //When, then
         assertThrows(
@@ -173,12 +170,9 @@ class CategoryServiceImplTest {
     @Test
     public void update_existingNameInSameCategory_returnUpdatedCategory() {
         //Given
-        when(categoryRepository.findById(2L)).thenReturn(
-            Optional.of(mockCategory(2L, "Second category", "Second category description"))
-        );
-        when(categoryRepository.findCategoryByName("Second category")).thenReturn(
-            Optional.of(mockCategory(2L, "Second category", "Second category description"))
-        );
+        Optional<Category> optionalCategory = Optional.of(mockCategory(2L, "Second category", "Second category description"));
+        when(categoryRepository.findById(2L)).thenReturn(optionalCategory);
+        when(categoryRepository.findCategoryByName("Second category")).thenReturn(optionalCategory);
 
         //When
         CategoryDto categoryDto = categoryService.update(
@@ -194,12 +188,10 @@ class CategoryServiceImplTest {
     @Test
     public void update_nonExistingName_returnUpdatedCategory() {
         //Given
-        when(categoryRepository.findById(2L)).thenReturn(
-            Optional.of(mockCategory(2L, "Second category", "Second category description"))
-        );
-        when(categoryRepository.findCategoryByName("Second category")).thenReturn(
-            Optional.empty()
-        );
+        Optional<Category> optionalCategory = Optional.of(mockCategory(2L, "Second category", "Second category description"));
+        when(categoryRepository.findById(2L)).thenReturn(optionalCategory);
+
+        when(categoryRepository.findCategoryByName("Second category")).thenReturn(Optional.empty());
         mockSave(categoryRepository);
 
         //When
@@ -241,14 +233,14 @@ class CategoryServiceImplTest {
     }
 
     private void mockFindAll(CategoryRepository categoryRepository, int size) {
-        when(categoryRepository.findAll(any(Pageable.class))).thenAnswer(inv -> {
-            List<Category> categories = new ArrayList<>();
-            for (long i = 1; i <= size; i++) {
-                categories.add(
-                    mockCategory(i, "#" + i + " name", "#" + i + " category description")
-                );
-            }
+        List<Category> categories = new ArrayList<>();
+        for (long i = 1; i <= size; i++) {
+            categories.add(
+                mockCategory(i, "#" + i + " name", "#" + i + " category description")
+            );
+        }
 
+        when(categoryRepository.findAll(any(Pageable.class))).thenAnswer(inv -> {
             Pageable pageable = inv.getArgument(0);
             int start = (int) pageable.getOffset();
             int end = Math.min(start + pageable.getPageSize(), size);
