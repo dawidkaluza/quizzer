@@ -10,7 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public final class ErrorResultMatchers {
-    private static final Pattern iso8601Pattern = Pattern.compile("^(\\d{4}-\\d{2}-\\d{2})[A-Z]+(\\d{2}:\\d{2}:\\d{2}).([0-9+-:]+)$");
+    private static final Pattern iso8601Pattern = Pattern.compile("^(\\d{4}-\\d{2}-\\d{2})[A-Z]+(\\d{2}:\\d{2}:\\d{2}).([0-9Z+-:]+)$");
 
     private ErrorResultMatchers() {
     }
