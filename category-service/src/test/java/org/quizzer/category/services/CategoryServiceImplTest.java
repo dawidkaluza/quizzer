@@ -2,7 +2,6 @@ package org.quizzer.category.services;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.quizzer.category.domain.Category;
 import org.quizzer.category.dto.base.CategoryDto;
 import org.quizzer.category.dto.base.CategoryDtoMapper;
@@ -25,6 +24,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.quizzer.category.domain.CategoryStub.*;
 
 class CategoryServiceImplTest {
     private CategoryRepository categoryRepository;
@@ -97,7 +97,7 @@ class CategoryServiceImplTest {
     @Test
     public void get_existingId_returnCategoryDto() {
         //Given
-        Optional<Category> optionalCategory = Optional.of(mockCategory(1L, "First category", "First category desc"));
+        Optional<Category> optionalCategory = Optional.of(of(1L, "First category", "First category desc"));
         when(categoryRepository.findById(1L)).thenReturn(optionalCategory);
 
         //When
@@ -153,9 +153,9 @@ class CategoryServiceImplTest {
     @Test
     public void update_existingNameInDifferentCategory_throwException() {
         //Given
-        Optional<Category> optionalFirstCategory = Optional.of(mockCategory(1L, "First category", "First category description"));
+        Optional<Category> optionalFirstCategory = Optional.of(of(1L, "First category", "First category description"));
         when(categoryRepository.findById(1L)).thenReturn(optionalFirstCategory);
-        Optional<Category> optionalSecondCategory = Optional.of(mockCategory(2L, "Second category", "Second category description"));
+        Optional<Category> optionalSecondCategory = Optional.of(of(2L, "Second category", "Second category description"));
         when(categoryRepository.findCategoryByName("Second category")).thenReturn(optionalSecondCategory);
 
         //When, then
@@ -170,7 +170,7 @@ class CategoryServiceImplTest {
     @Test
     public void update_existingNameInSameCategory_returnUpdatedCategory() {
         //Given
-        Optional<Category> optionalCategory = Optional.of(mockCategory(2L, "Second category", "Second category description"));
+        Optional<Category> optionalCategory = Optional.of(of(2L, "Second category", "Second category description"));
         when(categoryRepository.findById(2L)).thenReturn(optionalCategory);
         when(categoryRepository.findCategoryByName("Second category")).thenReturn(optionalCategory);
 
@@ -188,7 +188,7 @@ class CategoryServiceImplTest {
     @Test
     public void update_nonExistingName_returnUpdatedCategory() {
         //Given
-        Optional<Category> optionalCategory = Optional.of(mockCategory(2L, "Second category", "Second category description"));
+        Optional<Category> optionalCategory = Optional.of(of(2L, "Second category", "Second category description"));
         when(categoryRepository.findById(2L)).thenReturn(optionalCategory);
 
         when(categoryRepository.findCategoryByName("Second category")).thenReturn(Optional.empty());
@@ -223,20 +223,11 @@ class CategoryServiceImplTest {
         categoryService.delete(1L);
     }
 
-    private Category mockCategory(Long id, String name, String description) {
-        Category category = new Category();
-        category.setName(name);
-        category.setDescription(description);
-        category = Mockito.spy(category);
-        Mockito.when(category.getId()).thenReturn(id);
-        return category;
-    }
-
     private void mockFindAll(CategoryRepository categoryRepository, int size) {
         List<Category> categories = new ArrayList<>();
         for (long i = 1; i <= size; i++) {
             categories.add(
-                mockCategory(i, "#" + i + " name", "#" + i + " category description")
+                of(i, "#" + i + " name", "#" + i + " category description")
             );
         }
 
