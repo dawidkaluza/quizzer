@@ -7,7 +7,6 @@ import org.quizzer.category.dto.page.PageDto;
 import org.quizzer.category.exceptions.CategoryNotFoundException;
 import org.quizzer.category.exceptions.NameAlreadyExistsException;
 import org.quizzer.category.services.CategoryService;
-import org.quizzer.category.utils.mockmvc.PageResultMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -22,8 +21,10 @@ import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Mockito.*;
-import static org.quizzer.category.utils.mockmvc.ErrorResultMatchers.expectError;
-import static org.quizzer.category.utils.mockmvc.ErrorResultMatchers.expectFieldError;
+import static org.quizzer.category.utils.resultmatchers.ErrorResultMatchers.expectError;
+import static org.quizzer.category.utils.resultmatchers.ErrorResultMatchers.expectFieldError;
+import static org.quizzer.category.utils.resultmatchers.PageResultMatchers.expectPage;
+import static org.quizzer.category.utils.resultmatchers.ResultMatcher.ofMvcResult;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -64,7 +65,7 @@ class CategoryControllerTest {
         );
 
         //Then
-        PageResultMatchers.expectPage(resultActions, 0, 10, 25, 3);
+        expectPage(ofMvcResult(resultActions.andReturn()), 0, 10, 25, 3);
         resultActions
             .andExpect(jsonPath("$.content[0].id").value(1))
             .andExpect(jsonPath("$.content[0].name").value("Math"))
@@ -101,7 +102,7 @@ class CategoryControllerTest {
         );
 
         //Then
-        PageResultMatchers.expectPage(resultActions, 1, 3, 50, 17);
+        expectPage(ofMvcResult(resultActions.andReturn()), 1, 3, 50, 17);
         resultActions
             .andExpect(jsonPath("$.content[0].id").value(1))
             .andExpect(jsonPath("$.content[0].name").value("Math"))
@@ -145,7 +146,7 @@ class CategoryControllerTest {
         );
 
         //Then
-        expectError(resultActions, HttpStatus.NOT_FOUND);
+        expectError(ofMvcResult(resultActions.andReturn()), HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -164,8 +165,8 @@ class CategoryControllerTest {
         );
 
         //Then
-        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
-        expectFieldError(resultActions, "name");
+        expectError(ofMvcResult(resultActions.andReturn()), HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(ofMvcResult(resultActions.andReturn()), "name");
     }
 
     @Test
@@ -184,8 +185,8 @@ class CategoryControllerTest {
         );
 
         //Then
-        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
-        expectFieldError(resultActions, "name");
+        expectError(ofMvcResult(resultActions.andReturn()), HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(ofMvcResult(resultActions.andReturn()), "name");
     }
 
     @Test
@@ -204,8 +205,8 @@ class CategoryControllerTest {
         );
 
         //Then
-        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
-        expectFieldError(resultActions, "name");
+        expectError(ofMvcResult(resultActions.andReturn()), HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(ofMvcResult(resultActions.andReturn()), "name");
     }
 
     @Test
@@ -224,8 +225,8 @@ class CategoryControllerTest {
         );
 
         //Then
-        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
-        expectFieldError(resultActions, "description");
+        expectError(ofMvcResult(resultActions.andReturn()), HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(ofMvcResult(resultActions.andReturn()), "description");
     }
 
     @Test
@@ -244,8 +245,8 @@ class CategoryControllerTest {
         );
 
         //Then
-        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
-        expectFieldError(resultActions, "description");
+        expectError(ofMvcResult(resultActions.andReturn()), HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(ofMvcResult(resultActions.andReturn()), "description");
     }
 
     @Test
@@ -264,8 +265,8 @@ class CategoryControllerTest {
         );
 
         //Then
-        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
-        expectFieldError(resultActions, "description");
+        expectError(ofMvcResult(resultActions.andReturn()), HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(ofMvcResult(resultActions.andReturn()), "description");
     }
 
     @Test
@@ -285,7 +286,7 @@ class CategoryControllerTest {
         );
 
         //Then
-        expectError(resultActions, HttpStatus.CONFLICT);
+        expectError(ofMvcResult(resultActions.andReturn()), HttpStatus.CONFLICT);
     }
 
     @Test
@@ -331,7 +332,7 @@ class CategoryControllerTest {
         );
 
         //Then
-        expectError(resultActions, HttpStatus.NOT_FOUND);
+        expectError(ofMvcResult(resultActions.andReturn()), HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -350,8 +351,8 @@ class CategoryControllerTest {
         );
 
         //Then
-        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
-        expectFieldError(resultActions, "name");
+        expectError(ofMvcResult(resultActions.andReturn()), HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(ofMvcResult(resultActions.andReturn()), "name");
     }
 
     @Test
@@ -370,8 +371,8 @@ class CategoryControllerTest {
         );
 
         //Then
-        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
-        expectFieldError(resultActions, "name");
+        expectError(ofMvcResult(resultActions.andReturn()), HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(ofMvcResult(resultActions.andReturn()), "name");
     }
 
     @Test
@@ -390,8 +391,8 @@ class CategoryControllerTest {
         );
 
         //Then
-        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
-        expectFieldError(resultActions, "description");
+        expectError(ofMvcResult(resultActions.andReturn()), HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(ofMvcResult(resultActions.andReturn()), "description");
     }
 
     @Test
@@ -410,8 +411,8 @@ class CategoryControllerTest {
         );
 
         //Then
-        expectError(resultActions, HttpStatus.UNPROCESSABLE_ENTITY);
-        expectFieldError(resultActions, "description");
+        expectError(ofMvcResult(resultActions.andReturn()), HttpStatus.UNPROCESSABLE_ENTITY);
+        expectFieldError(ofMvcResult(resultActions.andReturn()), "description");
     }
 
     @Test
@@ -431,7 +432,7 @@ class CategoryControllerTest {
         );
 
         //Then
-        expectError(resultActions, HttpStatus.CONFLICT);
+        expectError(ofMvcResult(resultActions.andReturn()), HttpStatus.CONFLICT);
     }
 
     @Test
@@ -471,7 +472,7 @@ class CategoryControllerTest {
         );
 
         //Then
-        expectError(resultActions, HttpStatus.NOT_FOUND);
+        expectError(ofMvcResult(resultActions.andReturn()), HttpStatus.NOT_FOUND);
     }
 
     @Test
