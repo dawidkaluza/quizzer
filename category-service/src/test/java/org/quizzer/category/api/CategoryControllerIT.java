@@ -2,13 +2,15 @@ package org.quizzer.category.api;
 
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.quizzer.category.utils.resultmatchers.ResultMatcher;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,10 +22,41 @@ import static org.quizzer.category.utils.resultmatchers.ErrorResultMatchers.expe
 import static org.quizzer.category.utils.resultmatchers.PageResultMatchers.expectPage;
 import static org.quizzer.category.utils.resultmatchers.ResultMatcher.ofRestAssuredResponse;
 
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class CategoryControllerIT {
+    private static final long HEALTH_CHECK_DELAY = 250L;
+    private static final RestTemplate restTemplate = new RestTemplate();
+    private static boolean doRestart = false;
+
+    @BeforeEach
+    public void beforeEach() throws InterruptedException {
+        if (!doRestart) {
+            return;
+        }
+
+        restTemplate.exchange("http://localhost:8080/restart", HttpMethod.POST, null, Object.class);
+
+        for (;;) {
+            //noinspection BusyWait
+            Thread.sleep(HEALTH_CHECK_DELAY);
+
+            try {
+                restTemplate.exchange("http://localhost:8080/status", HttpMethod.GET, null, Object.class);
+            } catch (RestClientException e) {
+                continue;
+            }
+
+            break;
+        }
+
+        doRestart = false;
+    }
+
+    @AfterEach
+    public void afterEach() {
+        doRestart = true;
+    }
+
     @Test
-    @Order(1)
     public void getCategories_noPaginationDefined_returnPagedResponse() {
         // Given
         RequestSpecification requestSpecification = given()
@@ -49,7 +82,6 @@ public class CategoryControllerIT {
     }
 
     @Test
-    @Order(1)
     public void getCategories_paginationOutOfScope_returnEmptyPage() {
         // Given
         RequestSpecification requestSpecification = given()
@@ -69,7 +101,6 @@ public class CategoryControllerIT {
     }
 
     @Test
-    @Order(1)
     public void getCategories_validPagination_returnPagedResponse() {
         // Given
         RequestSpecification requestSpecification = given()
@@ -93,7 +124,6 @@ public class CategoryControllerIT {
     }
 
     @Test
-    @Order(1)
     public void getCategory_nonExistingId_returnError() {
         // Given
         RequestSpecification requestSpecification = given()
@@ -108,7 +138,6 @@ public class CategoryControllerIT {
     }
 
     @Test
-    @Order(1)
     public void getCategory_existingId_returnRelevantCategory() {
         // Given
         RequestSpecification requestSpecification = given()
