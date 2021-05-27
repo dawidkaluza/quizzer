@@ -14,5 +14,9 @@ public class QuestionDto {
 
     private String content;
 
-    private List<AnswerDto> answers;
+    private List<AnswerDto> incorrectAnswers;
+
+    private AnswerDto correctAnswer;
+
+    private Long categoryId;
 }
