@@ -5,6 +5,7 @@ import org.quizzer.question.dto.base.QuestionDto;
 import org.quizzer.question.dto.creation.QuestionCreationDto;
 import org.quizzer.question.dto.page.PageDto;
 import org.quizzer.question.dto.update.QuestionUpdateDto;
+import org.quizzer.question.exceptions.QuestionNotFoundException;
 import org.quizzer.question.services.QuestionService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -23,8 +24,8 @@ public class QuestionController {
     }
 
     @GetMapping("/{id}")
-    public QuestionDto getQuestion(@PathVariable("id") Long id) {
-        return null;
+    public QuestionDto getQuestion(@PathVariable("id") Long id) throws QuestionNotFoundException {
+        return questionService.getQuestion(id);
     }
 
     @PostMapping

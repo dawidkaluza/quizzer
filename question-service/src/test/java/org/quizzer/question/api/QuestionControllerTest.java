@@ -4,12 +4,14 @@ import io.restassured.http.ContentType;
 import io.restassured.module.mockmvc.response.MockMvcResponse;
 import io.restassured.module.mockmvc.response.ValidatableMockMvcResponse;
 import io.restassured.module.mockmvc.specification.MockMvcRequestSpecification;
+import org.hamcrest.text.MatchesPattern;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 import org.quizzer.question.dto.base.AnswerDto;
 import org.quizzer.question.dto.base.QuestionDto;
 import org.quizzer.question.dto.page.PageDto;
+import org.quizzer.question.exceptions.QuestionNotFoundException;
 import org.quizzer.question.services.QuestionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,6 +24,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.given;
 import static io.restassured.module.mockmvc.RestAssuredMockMvc.webAppContextSetup;
@@ -36,6 +39,9 @@ public class QuestionControllerTest {
 
     @Autowired
     private WebApplicationContext webAppContext;
+
+    private final Pattern iso8601Pattern = Pattern.compile("^(\\d{4}-\\d{2}-\\d{2})[A-Z]+(\\d{2}:\\d{2}:\\d{2}).([0-9Z+-:]+)$");
+
 
     @BeforeEach
     public void beforeEach() {
@@ -59,7 +65,7 @@ public class QuestionControllerTest {
         ValidatableMockMvcResponse validatableResponse = response.then();
 
         validatableResponse
-            .statusCode(HttpStatus.OK.value())
+            .status(HttpStatus.OK)
             .body("content.id", hasItems(generateRange(1, 10, i -> i, Integer.class)))
             .body("content.content", hasItems(generateRange(1, 10, i -> generateFakeQuestionContent(i, (i - 1) / 10 + 1), String.class)))
             .body("content.incorrectAnswers.id", hasSize(greaterThan(0)))
@@ -87,7 +93,7 @@ public class QuestionControllerTest {
         ValidatableMockMvcResponse validatableResponse = response.then();
 
         validatableResponse
-            .statusCode(HttpStatus.OK.value())
+            .status(HttpStatus.OK)
             .body("content.id", hasItems(generateRange(11, 20, i -> i, Integer.class)))
             .body("content.content", hasItems(generateRange(11, 20, i -> generateFakeQuestionContent(i, (i - 1) / 10 + 1), String.class)))
             .body("content.incorrectAnswers.id", hasSize(greaterThan(0)))
@@ -115,7 +121,7 @@ public class QuestionControllerTest {
         ValidatableMockMvcResponse validatableResponse = response.then();
 
         validatableResponse
-            .statusCode(HttpStatus.OK.value())
+            .status(HttpStatus.OK)
             .body("content", hasSize(0))
             .body("content.id", empty())
             .body("content.content", empty())
@@ -144,7 +150,7 @@ public class QuestionControllerTest {
         ValidatableMockMvcResponse validatableResponse = response.then();
 
         validatableResponse
-            .statusCode(HttpStatus.OK.value())
+            .status(HttpStatus.OK)
             .body("content", hasSize(0))
             .body("content.id", empty())
             .body("content.content", empty())
@@ -173,7 +179,7 @@ public class QuestionControllerTest {
         ValidatableMockMvcResponse validatableResponse = response.then();
 
         validatableResponse
-            .statusCode(HttpStatus.OK.value())
+            .status(HttpStatus.OK)
             .body("content", hasSize(10))
             .body("content.id", hasItems(generateRange(11, 20, i -> i, Integer.class)))
             .body("content.content", hasItems(generateRange(11, 20, i -> generateFakeQuestionContent(i, (i - 1) / 10 + 1), String.class)))
@@ -202,7 +208,7 @@ public class QuestionControllerTest {
         ValidatableMockMvcResponse validatableResponse = response.then();
 
         validatableResponse
-            .statusCode(HttpStatus.OK.value())
+            .status(HttpStatus.OK)
             .body("content", hasSize(5))
             .body("content.id", hasItems(generateRange(26, 30, i -> i, Integer.class)))
             .body("content.content", hasItems(generateRange(26, 30, i -> generateFakeQuestionContent(i, (i - 1) / 10 + 1), String.class)))
@@ -212,6 +218,149 @@ public class QuestionControllerTest {
             .body("content.correctAnswer.content", notNullValue());
 
         validatePage(validatableResponse, 1, 5, 10, 2);
+    }
+
+    @Test
+    public void getQuestion_nonExistingId_returnError() {
+        // Given
+        when(questionService.getQuestion(any()))
+            .thenThrow(new QuestionNotFoundException("Question with given id doesn't exist"));
+
+        MockMvcRequestSpecification reqSpec = given()
+            .contentType(ContentType.JSON);
+
+        // When
+        MockMvcResponse response = reqSpec.when()
+            .get("/question/1");
+
+        // Then
+        ValidatableMockMvcResponse validatableResponse = response.then();
+        validateError(validatableResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    public void getQuestion_existingId_returnQuestion() {
+        // Given
+        when(questionService.getQuestion(any()))
+            .thenAnswer(answer -> {
+                long questionId = answer.getArgument(0);
+                long categoryId = (questionId - 1) / 10 + 1;
+                return generateFakeQuestionWithAnswers(questionId, categoryId);
+            });
+
+        MockMvcRequestSpecification reqSpec = given()
+            .contentType(ContentType.JSON);
+
+        // When
+        MockMvcResponse response = reqSpec.when()
+            .get("/question/1");
+
+        // Then
+        response.then()
+            .status(HttpStatus.OK)
+            .body("id", is(1))
+            .body("content", notNullValue())
+            .body("incorrectAnswers.id", hasSize(greaterThan(0)))
+            .body("incorrectAnswers.content", hasSize(greaterThan(0)))
+            .body("correctAnswer.id", notNullValue())
+            .body("correctAnswer.content", notNullValue());
+    }
+
+    /**
+     * Build mockito answer for questionService.getAllQuestions method
+     * Method builds specified number of fake questions and also fake answers to them
+     * It uses generateFakeQuestionContent to create question content and generateFakeAnswerContent to create answer content
+     * This makes the mock to look like a real invocation
+     * @return answer for mocked getAllQuestions invoking
+     */
+    private Answer<?> buildGetAllQuestionsAnswer() {
+        return inv -> {
+            Pageable pageable = inv.getArgument(0);
+            String content = inv.getArgument(1);
+
+            List<QuestionDto> questions = new ArrayList<>();
+            int pageStart = pageable.getPageNumber() * pageable.getPageSize() + 1;
+            int pageEnd = pageStart + pageable.getPageSize() - 1;
+            int matchingQuestionsNum = 0;
+            for (long questionId = 1; questionId <= 30; questionId++) {
+                //TODO
+                // its possible to make it better?
+                // idk, but i think that all possible categoryId creation based on questionId should be in a one place
+                long categoryId = (questionId - 1) / 10 + 1;
+
+                QuestionDto question = generateFakeQuestionWithAnswers(questionId, categoryId);
+                if (content != null && !question.getContent().contains(content)) {
+                    continue;
+                }
+
+                matchingQuestionsNum ++;
+                if (matchingQuestionsNum < pageStart || matchingQuestionsNum > pageEnd) {
+                    continue;
+                }
+
+                questions.add(question);
+            }
+
+            return new PageDto<>(
+                questions,
+                pageable.getPageNumber(),
+                pageable.getPageSize(), matchingQuestionsNum,
+                matchingQuestionsNum / pageable.getPageSize()
+            );
+        };
+    }
+
+    private QuestionDto generateFakeQuestionWithAnswers(long questionId, long categoryId) {
+        QuestionDto question = new QuestionDto();
+        question.setId(questionId);
+        question.setContent(generateFakeQuestionContent(questionId, categoryId));
+        question.setCategoryId(categoryId);
+
+        List<AnswerDto> incorrectAnswers = new ArrayList<>();
+        int correctAnswerNum = (int) (Math.random() * 4) + 1;
+        for (int j = 1; j <= 4; j++) {
+            AnswerDto answer = new AnswerDto();
+            answer.setId((long) (questionId - 1) * 4 + j);
+            answer.setContent(generateFakeAnswerContent(j, questionId));
+
+            if (j != correctAnswerNum) {
+                incorrectAnswers.add(answer);
+            } else {
+                question.setCorrectAnswer(answer);
+            }
+        }
+        question.setIncorrectAnswers(incorrectAnswers);
+        return question;
+    }
+
+    private String generateFakeQuestionContent(long questionId, long categoryId) {
+        return "Question #" + questionId + ", category #" + categoryId;
+    }
+
+    private String generateFakeAnswerContent(long answerId, long questionId) {
+        return "Answer #" + answerId + " on question #" + questionId;
+    }
+
+    private void validatePage(ValidatableMockMvcResponse validatableResponse, int number, int size, int totalElements, int totalPages) {
+        validatableResponse
+            .body("number", is(number))
+            .body("size", is(size))
+            .body("totalElements", is(totalElements))
+            .body("totalPages", is(totalPages));
+    }
+
+    private void validateError(ValidatableMockMvcResponse validatableResponse, HttpStatus status) {
+        validatableResponse
+            .status(status)
+            .body("status", is(status.value()))
+            .body("message", notNullValue())
+            .body("timestamp", MatchesPattern.matchesPattern(iso8601Pattern));
+    }
+
+    private void validateErrorField(ValidatableMockMvcResponse validatableResponse, String field) {
+        validatableResponse
+            .body("fieldErrors.find { field -> field.field == '" + field + "' }.field", notNullValue())
+            .body("fieldErrors.find { field -> field.field == '" + field + "' }.message", notNullValue());
     }
 
     /**
@@ -232,82 +381,5 @@ public class QuestionControllerTest {
             tab[tabIndex++] = el;
         }
         return tab;
-    }
-
-    private String generateFakeQuestionContent(long questionId, long categoryId) {
-        return "Question #" + questionId + ", category #" + categoryId;
-    }
-
-    private String generateFakeAnswerContent(long answerId, long questionId) {
-        return "Answer #" + answerId + " on question #" + questionId;
-    }
-
-    /**
-     * Build mockito answer for questionService.getAllQuestions method
-     * Method builds specified number of fake questions and also fake answers to them
-     * It uses generateFakeQuestionContent to create question content and generateFakeAnswerContent to create answer content
-     * This makes the mock to look like a real invocation
-     * @return answer for mocked getAllQuestions invoking
-     */
-    private Answer<?> buildGetAllQuestionsAnswer() {
-        return inv -> {
-            Pageable pageable = inv.getArgument(0);
-            String content = inv.getArgument(1);
-
-            List<QuestionDto> questions = new ArrayList<>();
-            int pageStart = pageable.getPageNumber() * pageable.getPageSize() + 1;
-            int pageEnd = pageStart + pageable.getPageSize() - 1;
-            int matchingQuestionsNum = 0;
-            for (int questionId = 1; questionId <= 30; questionId++) {
-                //TODO its possible to make it better?
-                long categoryId = (questionId - 1) / 10 + 1;
-
-                String newQuestionContent = generateFakeQuestionContent(questionId, categoryId);
-                if (content != null && !newQuestionContent.contains(content)) {
-                    continue;
-                }
-
-                matchingQuestionsNum ++;
-                if (matchingQuestionsNum < pageStart || matchingQuestionsNum > pageEnd) {
-                    continue;
-                }
-
-                QuestionDto question = new QuestionDto();
-                question.setId((long) questionId);
-                question.setContent(newQuestionContent);
-                question.setCategoryId(categoryId);
-
-                List<AnswerDto> incorrectAnswers = new ArrayList<>();
-                int correctAnswerNum = (int) (Math.random() * 4) + 1;
-                for (int j = 1; j <= 4; j++) {
-                    AnswerDto answer = new AnswerDto();
-                    answer.setId((long) (questionId - 1) * 4 + j);
-                    answer.setContent(generateFakeAnswerContent(j, questionId));
-
-                    if (j != correctAnswerNum) {
-                        incorrectAnswers.add(answer);
-                    } else {
-                        question.setCorrectAnswer(answer);
-                    }
-                }
-                question.setIncorrectAnswers(incorrectAnswers);
-                questions.add(question);
-            }
-
-            return new PageDto<>(
-                questions,
-                pageable.getPageNumber(),
-                pageable.getPageSize(), matchingQuestionsNum,
-                matchingQuestionsNum / pageable.getPageSize()
-            );
-        };
-    }
-
-    private void validatePage(ValidatableMockMvcResponse response, int number, int size, int totalElements, int totalPages) {
-        response
-            .body("number", is(number))
-            .body("size", is(size))
-            .body("totalElements", is(totalElements))
-            .body("totalPages", is(totalPages));
     }
 }
