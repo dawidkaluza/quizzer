@@ -8,9 +8,10 @@ import org.springframework.lang.Nullable;
 public interface QuestionService {
     /**
      * Return all question that matches given content if it's not null
-     * @param pageable
-     * @param content
-     * @return
+     * @param pageable page details
+     * @param content string that need to be in the searched questions if it's not null.
+     *                If this param is null, content is not checked.
+     * @return page with questions
      */
     PageDto<QuestionDto> getAllQuestions(Pageable pageable, @Nullable String content);
 }

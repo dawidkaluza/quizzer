@@ -5,20 +5,21 @@ import org.quizzer.question.dto.base.QuestionDto;
 import org.quizzer.question.dto.creation.QuestionCreationDto;
 import org.quizzer.question.dto.page.PageDto;
 import org.quizzer.question.dto.update.QuestionUpdateDto;
+import org.quizzer.question.services.QuestionService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
-
 @RestController
 @RequestMapping("/question")
 @RequiredArgsConstructor
 public class QuestionController {
+    private final QuestionService questionService;
+
     @GetMapping
     public PageDto<QuestionDto> getQuestions(@PageableDefault Pageable pageable, @RequestParam(name = "content", required = false) String content) {
-        return new PageDto<>(Collections.emptyList(), 0, 0, 0, 0);
+        return questionService.getAllQuestions(pageable, content);
     }
 
     @GetMapping("/{id}")
