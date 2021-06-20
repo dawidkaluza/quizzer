@@ -1,6 +1,5 @@
 package org.quizzer.question.dto.base;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

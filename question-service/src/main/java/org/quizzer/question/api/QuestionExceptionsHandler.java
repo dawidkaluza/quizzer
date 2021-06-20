@@ -1,5 +1,6 @@
 package org.quizzer.question.api;
 
+import org.quizzer.question.exceptions.CategoryNotFoundException;
 import org.quizzer.question.exceptions.QuestionNotFoundException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -16,6 +17,15 @@ public class QuestionExceptionsHandler {
         return ApiError.builder()
             .status(HttpStatus.NOT_FOUND)
             .message("Question doesn't exist")
+            .build()
+            .toResponseEntity();
+    }
+
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ResponseEntity<Object> categoryNotFoundExceptionHandler() {
+        return ApiError.builder()
+            .status(HttpStatus.NOT_FOUND)
+            .message("Category doesn't exist")
             .build()
             .toResponseEntity();
     }

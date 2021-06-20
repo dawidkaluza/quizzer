@@ -1,7 +1,9 @@
 package org.quizzer.question.services;
 
 import org.quizzer.question.dto.base.QuestionDto;
+import org.quizzer.question.dto.creation.QuestionCreationDto;
 import org.quizzer.question.dto.page.PageDto;
+import org.quizzer.question.exceptions.CategoryNotFoundException;
 import org.quizzer.question.exceptions.QuestionNotFoundException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.Nullable;
@@ -23,4 +25,12 @@ public interface QuestionService {
      * @throws QuestionNotFoundException if question with a given id doesn't exist
      */
     QuestionDto getQuestion(Long id) throws QuestionNotFoundException;
+
+    /**
+     * Create a new question
+     * @param creationRequest object used to create new question
+     * @return created question
+     * @throws CategoryNotFoundException if category with given id doesn't exist
+     */
+    QuestionDto createQuestion(QuestionCreationDto creationRequest) throws CategoryNotFoundException;
 }

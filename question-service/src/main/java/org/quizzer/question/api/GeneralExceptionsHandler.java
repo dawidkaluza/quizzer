@@ -10,14 +10,20 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 @RestControllerAdvice
 @Order
 public class GeneralExceptionsHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> exceptionHandler() {
+    public ResponseEntity<Object> exceptionHandler(Exception e) {
+        StringWriter stringWriter = new StringWriter();
+        e.printStackTrace(new PrintWriter(stringWriter));
+
         return ApiError.builder()
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .message("Internal server error")
+            .message(stringWriter.toString())
             .build()
             .toResponseEntity();
     }

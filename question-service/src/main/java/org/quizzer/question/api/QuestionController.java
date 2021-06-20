@@ -5,12 +5,15 @@ import org.quizzer.question.dto.base.QuestionDto;
 import org.quizzer.question.dto.creation.QuestionCreationDto;
 import org.quizzer.question.dto.page.PageDto;
 import org.quizzer.question.dto.update.QuestionUpdateDto;
+import org.quizzer.question.exceptions.CategoryNotFoundException;
 import org.quizzer.question.exceptions.QuestionNotFoundException;
 import org.quizzer.question.services.QuestionService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/question")
@@ -30,12 +33,12 @@ public class QuestionController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public QuestionDto createQuestion(@RequestBody QuestionCreationDto.Request creationRequest) {
-        return null;
+    public QuestionDto createQuestion(@RequestBody @Valid QuestionCreationDto creationRequest) throws CategoryNotFoundException {
+        return questionService.createQuestion(creationRequest);
     }
 
     @PutMapping("/{id}")
-    public QuestionDto updateQuestion(@PathVariable("id") Long id, @RequestBody QuestionUpdateDto.Request updateRequest) {
+    public QuestionDto updateQuestion(@PathVariable("id") Long id, @RequestBody QuestionUpdateDto updateRequest) {
         return null;
     }
 
